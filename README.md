@@ -1,2 +1,2 @@
-# dashboarding_sql
-the backbone of various KPI dashboards i've built
+# SQL-Examples
+A sampling of data pipelines I've built for KPI dashboarding in Mode, LookerStudio, GoogleSheets, Excel, etc. 
