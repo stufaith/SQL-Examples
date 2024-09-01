@@ -1,0 +1,70 @@
+DECLARE start_date DATE;
+DECLARE end_date DATE;
+DECLARE start_comp DATE;
+DECLARE end_comp DATE;
+
+# comparing first six months of 2024 to previous six months + the previous year (aligned so that days of week match)
+SET start_date = '2024-01-01';
+SET end_date = '2024-06-30';
+SET start_comp = '2023-07-01';
+SET end_comp = '2023-12-31';
+
+with base_aggregations as (
+select
+traffic_channel
+, content_id 
+--Pageview metrics
+, count(distinct if(date between start_date and end_date,pageview_id,null)) as current_pageviews
+, count(distinct if(date between start_date - 364 and end_date - 364,pageview_id,null)) as last_year_pageviews
+, count(distinct if(date between start_comp and end_comp,pageview_id,null)) as comparison_pageviews
+--User metrics
+, count(distinct if(date between start_date and end_date,user_id,null)) as current_users
+, count(distinct if(date between start_date - 364 and end_date - 364,user_id,null)) as last_year_users
+, count(distinct if(date between start_comp and end_comp,user_id,null)) as comparison_users
+--Session metrics
+, count(distinct if(date between start_date and end_date,session_id,null)) as current_sessions
+, count(distinct if(date between start_date - 364 and end_date - 364,session_id,null)) as last_year_sessions
+, count(distinct if(date between start_comp and end_comp,session_id,null)) as comparison_sessions
+--Click metrics
+, sum(if(date between start_date and end_date,pclicks,null)) as current_clicks
+, sum(if(date between start_date - 364 and end_date - 364,pclicks,null)) as last_year_clicks
+, sum(if(date between start_comp and end_comp,pclicks,null)) as comparison_clicks
+--CTR metrics
+, safe_divide(sum(if(date between start_date and end_date,pclicks,null))
+      ,count(distinct if(date between start_date and end_date,pageview_id,null))
+  ) as current_CTR
+, safe_divide(sum(if(date between start_date - 364 and end_date - 364,pclicks,null))
+      ,count(distinct if(date between start_date - 364 and end_date - 364,pageview_id,null))
+  ) as last_year_CTR
+, safe_divide(sum(if(date between start_comp and end_comp,pclicks,null)) 
+      , count(distinct if(date between start_comp and end_comp,pageview_id,null))
+  ) as comparison_CTR
+from base_table
+
+where (date between start_date and end_date 
+        or date between start_comp and end_comp
+        or date between start_date - 364 and end_date - 364
+      )
+  ) 
+group by all 
+) 
+
+select 
+traffic_channel
+, content_id
+, current_pageviews
+, last_year_pageviews
+, comparison_pageviews
+
+, current_users
+, last_year_users
+, comparison_users
+
+, current_sessions
+, last_year_sessions
+, comparison_sessions
+
+, current_clicks
+, last_year_clicks
+, comparison_clicks
+from base 
